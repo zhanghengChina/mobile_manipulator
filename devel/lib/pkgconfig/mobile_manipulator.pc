@@ -1,0 +1,8 @@
+prefix=/home/leon/mobile_manipulator/devel
+
+Name: mobile_manipulator
+Description: Description of mobile_manipulator
+Version: 0.0.0
+Cflags: 
+Libs: -L/home/leon/mobile_manipulator/devel/lib 
+Requires: 

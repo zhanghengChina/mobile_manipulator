@@ -1,0 +1,2 @@
+mobile_manipulator
+-DCMAKE_BUILD_TYPE=Debug -DCATKIN_DEVEL_PREFIX=/home/leon/mobile_manipulator/devel -DCMAKE_INSTALL_PREFIX=/home/leon/mobile_manipulator/install -G Unix Makefiles
