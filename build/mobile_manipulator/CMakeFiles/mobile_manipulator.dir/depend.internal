@@ -3,6 +3,7 @@
 
 mobile_manipulator/CMakeFiles/mobile_manipulator.dir/src/mobile_manipulator.cpp.o
  /home/leon/mobile_manipulator/src/mobile_manipulator/src/mobile_manipulator.cpp
+ /home/leon/mobile_manipulator/src/tf2_eigen/include/tf2_eigen/tf2_eigen.h
  /opt/ros/indigo/include/XmlRpcDecl.h
  /opt/ros/indigo/include/XmlRpcValue.h
  /opt/ros/indigo/include/actionlib/action_definition.h

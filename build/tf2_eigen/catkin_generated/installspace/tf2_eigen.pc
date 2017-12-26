@@ -1,0 +1,8 @@
+prefix=/home/leon/mobile_manipulator/install
+
+Name: tf2_eigen
+Description: Description of tf2_eigen
+Version: 0.5.16
+Cflags: -I/home/leon/mobile_manipulator/install/include -I/usr/include/eigen3
+Libs: -L/home/leon/mobile_manipulator/install/lib 
+Requires: 

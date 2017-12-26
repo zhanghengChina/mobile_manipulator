@@ -7,7 +7,7 @@ add_compile_options(-std=c++11)
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
-find_package(catkin REQUIRED COMPONENTS actionlib actionlib_msgs actionlib_tutorials emg message_generation moveit_core moveit_msgs moveit_ros_planning_interface pluginlib roscpp rospy std_msgs tf2 tf2_ros)
+find_package(catkin REQUIRED COMPONENTS actionlib actionlib_msgs actionlib_tutorials message_generation moveit_core moveit_msgs moveit_ros_planning_interface pluginlib roscpp rospy std_msgs tf2 tf2_ros tf2_eigen)
 
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
@@ -201,5 +201,13 @@ add_executable(mobile_manipulator
 )
 add_dependencies(mobile_manipulator ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 target_link_libraries(mobile_manipulator
+  ${catkin_LIBRARIES}
+)
+
+add_executable(tf2eigen_test
+  src/tf2eigen_test.cpp
+)
+add_dependencies(tf2eigen_test ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+target_link_libraries(tf2eigen_test
   ${catkin_LIBRARIES}
 )

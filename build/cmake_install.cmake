@@ -117,6 +117,7 @@ endif()
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for each subdirectory.
   include("/home/leon/mobile_manipulator/build/gtest/cmake_install.cmake")
+  include("/home/leon/mobile_manipulator/build/tf2_eigen/cmake_install.cmake")
   include("/home/leon/mobile_manipulator/build/mobile_manipulator/cmake_install.cmake")
 
 endif()

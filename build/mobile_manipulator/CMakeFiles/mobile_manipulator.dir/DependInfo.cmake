@@ -22,6 +22,7 @@ set(CMAKE_TARGET_LINKED_INFO_FILES
 # The include file search paths:
 set(CMAKE_C_TARGET_INCLUDE_PATH
   "/home/leon/mobile_manipulator/src/mobile_manipulator/include"
+  "/home/leon/mobile_manipulator/src/tf2_eigen/include"
   "/opt/ros/indigo/include"
   "/usr/include/eigen3"
   )

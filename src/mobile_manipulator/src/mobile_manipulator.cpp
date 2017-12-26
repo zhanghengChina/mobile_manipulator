@@ -18,10 +18,15 @@
 #include <actionlib/client/simple_action_client.h>
 #include "std_msgs/Float64.h"
 #include "nav_msgs/Odometry.h"
+#include <tf2_eigen/tf2_eigen.h>
+#include <tf2/convert.h>
+#include <gtest/gtest.h>
+#include "Eigen/Core"
+#include "Eigen/Geometry"
 
 
 typedef actionlib::SimpleActionClient<control_msgs::FollowJointTrajectoryAction> Client;
-static geometry_msgs::Pose pose_now,pose_target_true,pose_target,pose_reference;
+
 
 class move_robot
 {//定义一个和运动相关的类，主要用来获取当前的位恣
@@ -112,23 +117,39 @@ public:
     MOBILE_MANIPULATOR()
     {
         odom_data_flag = 0;
+        length_a2b = -0.4;//这个数据还需要修改
         max_acc = 1.2;
         eef_vel.resize(6);
         pid.resize(3);
         pid = {5,5,5};
         max_vel = {0.8,0.8,0.8};
+
+        arm_base_to_agv_base_pose.position.x = length_a2b;
+        arm_base_to_agv_base_pose.position.y = arm_base_to_agv_base_pose.position.z = 0;
+        arm_base_to_agv_base_pose.orientation.x = arm_base_to_agv_base_pose.orientation.y = arm_base_to_agv_base_pose.orientation.z = 0;
+        arm_base_to_agv_base_pose.orientation.w = 1;
+        tf2::convert(arm_base_to_agv_base_pose,arm_base_to_agv_base_affine);
     }
 void start();
 
 void subcallback(const nav_msgs::Odometry::ConstPtr& msg)
 {
     //填写关于里程计信息的变化
-    if(odom_data_flag == 0) odom_data_flag = 1;
+    if(odom_data_flag == 0) 
+    {
+        //初始的数据值，当做世界坐标系来使用
+        agv_base_pose_referenece = msg->pose.pose;
+        tf2::convert(agv_base_pose_referenece,base_affine_init);
+        base_affine_init_inverse = base_affine_init.inverse();
+        odom_data_flag = 1;
+    }
 
-    //下面的进行数据变换
+    tf2::convert(msg->pose.pose,base_now_affine);
+    //base_now_affine是当前小车中心相对出发的时候小车中心的齐次坐标变化
+    base_now_affine = base_affine_init_inverse*base_now_affine;
 
-
-
+    //这是实际的机械臂的基座相对出发点的坐标变换
+    arm_base_affine = base_now_affine*arm_base_to_agv_base_affine;
 }
 
 private:
@@ -144,6 +165,14 @@ private:
     double max_acc;
     std::vector<double> max_vel;
     std::vector<double> pid;
+    double length_a2b;
+
+    geometry_msgs::Pose arm_base_to_agv_base_pose;//AGV和机械臂之间的连接的关系，这个是一直不变的
+
+    geometry_msgs::Pose arm_pose_now, arm_pose_target_true, arm_pose_target, arm_pose_reference;//和机械臂相关的位姿
+    geometry_msgs::Pose agv_base_pose_now , agv_base_pose_target , agv_base_pose_referenece;//和AGV相关的位姿
+    Eigen::Affine3d base_affine_init, base_affine_init_inverse, base_now_affine, arm_base_to_agv_base_affine, arm_base_affine;
+
 
     std::string combinemsg(std::vector<double> &velocity, double &acc)
     {
@@ -187,9 +216,10 @@ int main(int argc, char *argv[])
 void MOBILE_MANIPULATOR::start()
 {
     //最重要的一个函数
-    pose_now = move.group.getCurrentPose(move.group.getEndEffectorLink()).pose;
-    pose_reference = pose_target = pose_target_true = pose_now;
-    ROS_INFO_STREAM("Init Pose Is "<<pose_now);
+    arm_pose_now = move.group.getCurrentPose(move.group.getEndEffectorLink()).pose;
+    
+    arm_pose_reference = arm_pose_target = arm_pose_target_true = arm_pose_now;
+    ROS_INFO_STREAM("Init Pose Is "<<arm_pose_now);
 
     for(int i = 0 ; i < 6 ; i ++)
     {

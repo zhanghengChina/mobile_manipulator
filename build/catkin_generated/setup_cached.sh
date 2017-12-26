@@ -7,9 +7,5 @@
 # new environment variables
 
 # modified environment variables
-export CMAKE_PREFIX_PATH="/home/leon/mobile_manipulator/devel:$CMAKE_PREFIX_PATH"
-export LD_LIBRARY_PATH="/home/leon/mobile_manipulator/devel/lib:$LD_LIBRARY_PATH"
-export PKG_CONFIG_PATH="/home/leon/mobile_manipulator/devel/lib/pkgconfig:$PKG_CONFIG_PATH"
+export PKG_CONFIG_PATH="/home/leon/gazebo_test/devel/lib/pkgconfig:/home/leon/viso/devel/lib/pkgconfig:/home/leon/pythonlearning/devel/lib/pkgconfig:/home/leon/catkin/devel/lib/pkgconfig:/opt/ros/indigo/lib/pkgconfig:/opt/ros/indigo/lib/x86_64-linux-gnu/pkgconfig"
 export PWD="/home/leon/mobile_manipulator/build"
-export ROSLISP_PACKAGE_DIRECTORIES="/home/leon/mobile_manipulator/devel/share/common-lisp:$ROSLISP_PACKAGE_DIRECTORIES"
-export ROS_PACKAGE_PATH="/home/leon/mobile_manipulator/src:$ROS_PACKAGE_PATH"
