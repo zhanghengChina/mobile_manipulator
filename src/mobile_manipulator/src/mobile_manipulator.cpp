@@ -124,6 +124,7 @@ public:
         pid = {5,5,5};
         max_vel = {0.8,0.8,0.8};
 
+        //由于机械臂基座的坐标系和AGV基座的坐标系平行，只需要指定一个x方向的位移就行
         arm_base_to_agv_base_pose.position.x = length_a2b;
         arm_base_to_agv_base_pose.position.y = arm_base_to_agv_base_pose.position.z = 0;
         arm_base_to_agv_base_pose.orientation.x = arm_base_to_agv_base_pose.orientation.y = arm_base_to_agv_base_pose.orientation.z = 0;
@@ -134,29 +135,37 @@ void start();
 
 void subcallback(const nav_msgs::Odometry::ConstPtr& msg)
 {
-    //填写关于里程计信息的变化
     if(odom_data_flag == 0) 
     {
         //初始的数据值，当做世界坐标系来使用
         agv_base_pose_referenece = msg->pose.pose;
         tf2::convert(agv_base_pose_referenece,base_affine_init);
         base_affine_init_inverse = base_affine_init.inverse();
-        odom_data_flag = 1;
     }
 
-    tf2::convert(msg->pose.pose,base_now_affine);
+    global_msgs = msg->pose.pose;
+    tf2::convert(global_msgs,base_now_affine);
     //base_now_affine是当前小车中心相对出发的时候小车中心的齐次坐标变化
     base_now_affine = base_affine_init_inverse*base_now_affine;
-
     //这是实际的机械臂的基座相对出发点的坐标变换
     arm_base_affine = base_now_affine*arm_base_to_agv_base_affine;
+
+    if(odom_data_flag == 0)
+    {
+        arm_pose_now = move.group.getCurrentPose(move.group.getEndEffectorLink()).pose;
+        tf2::convert(arm_pose_now,eef_to_arm_base_affine);
+        //在这次试验中，这个量需要保持不变，即机械臂末端在世界坐标系下面的位置不变
+        eef_to_world_affine = arm_base_affine*eef_to_arm_base_affine;
+        odom_data_flag = 1;
+    }
 }
 
 private:
     ros::NodeHandle nh;
     ros::Subscriber odom_sub;
-    ros::Publisher pose_pub;
-    
+    ros::Publisher pose_now_pub;
+    ros::Publisher pose_target_pub;
+
     TCPIPAPI tcpip;
     move_robot move;
 
@@ -167,11 +176,17 @@ private:
     std::vector<double> pid;
     double length_a2b;
 
+    geometry_msgs::Pose global_msgs,local_msgs;
+
     geometry_msgs::Pose arm_base_to_agv_base_pose;//AGV和机械臂之间的连接的关系，这个是一直不变的
 
-    geometry_msgs::Pose arm_pose_now, arm_pose_target_true, arm_pose_target, arm_pose_reference;//和机械臂相关的位姿
-    geometry_msgs::Pose agv_base_pose_now , agv_base_pose_target , agv_base_pose_referenece;//和AGV相关的位姿
+    geometry_msgs::Pose agv_base_pose_now , agv_base_pose_referenece;//和AGV相关的位姿
     Eigen::Affine3d base_affine_init, base_affine_init_inverse, base_now_affine, arm_base_to_agv_base_affine, arm_base_affine;
+
+    geometry_msgs::Pose arm_pose_now, arm_pose_target_true, arm_pose_target;//和机械臂相关的位姿
+    Eigen::Affine3d eef_to_world_affine, eef_to_arm_base_affine;
+    
+    
 
 
     std::string combinemsg(std::vector<double> &velocity, double &acc)
@@ -201,8 +216,6 @@ private:
     }
 };
 
-
-
 int main(int argc, char *argv[])
 {
     ros::init(argc, argv, "mobile_manipulator");
@@ -215,11 +228,14 @@ int main(int argc, char *argv[])
 
 void MOBILE_MANIPULATOR::start()
 {
+
+    pose_now_pub = nh.advertise<geometry_msgs::Pose>("pose_now",1000);
+    pose_target_pub = nh.advertise<geometry_msgs::Pose>("pose_target",1000);
     //最重要的一个函数
-    arm_pose_now = move.group.getCurrentPose(move.group.getEndEffectorLink()).pose;
-    
-    arm_pose_reference = arm_pose_target = arm_pose_target_true = arm_pose_now;
+
+    arm_pose_target = arm_pose_target_true = arm_pose_now;
     ROS_INFO_STREAM("Init Pose Is "<<arm_pose_now);
+    std::string move_msg;//发送关于ur_script的消息
 
     for(int i = 0 ; i < 6 ; i ++)
     {
@@ -229,14 +245,46 @@ void MOBILE_MANIPULATOR::start()
     odom_sub = nh.subscribe<nav_msgs::Odometry>("odom", 1000, &MOBILE_MANIPULATOR::subcallback,this);//1000是缓冲区的大小
     ros::Duration(1.0).sleep();
 
+    local_msgs = global_msgs;
+
     ros::Time time_init = ros::Time::now();
 
     while(ros::ok())
     {
         if(odom_data_flag == 1)
         {
-            //执行具体的数据变换过程
+            while(ros::ok())
+            {
+                double error_x = global_msgs.position.x - local_msgs.position.x;
+                double error_y = global_msgs.position.y - local_msgs.position.y;
+                double error_z = global_msgs.orientation.w - local_msgs.orientation.w;
+                if(fabs(error_x)>0.0000005||fabs(error_y)>0.0000005||fabs(error_z) > 0.0000005) 
+                {
+                    ROS_INFO("Reveiving New Data Now!");
+                    //这个循环一般都不会死掉
+                    break;
+                }
+            }
+            local_msgs = global_msgs;
+            eef_to_arm_base_affine = arm_base_affine.inverse()*eef_to_world_affine;
+            tf2::convert(eef_to_arm_base_affine,arm_pose_target);
+            arm_pose_now = move.group.getCurrentPose(move.group.getEndEffectorLink()).pose;
 
+            eef_vel[0] = pid[0] * (arm_pose_target.position.x - arm_pose_now.position.x);
+            eef_vel[1] = pid[1] * (arm_pose_target.position.y - arm_pose_now.position.y);
+            eef_vel[2] = pid[2] * (arm_pose_target.position.z - arm_pose_now.position.z);
+            for(int i = 0 ; i < 3; i ++)
+            {
+                if(eef_vel[i]>max_vel[i])
+                    eef_vel[i] = max_vel[i];
+                if(eef_vel[i]<(-max_vel[i]))
+                    eef_vel[i] = -max_vel[i];
+            }
+            pose_now_pub.publish(arm_pose_now);
+            pose_target_pub.publish(arm_pose_target);
+            move_msg = combinemsg(eef_vel,max_acc);
+            ROS_INFO_STREAM("Sending msg "<<move_msg);
+            tcpip.send_msg(move_msg);
         }
         else
         {
