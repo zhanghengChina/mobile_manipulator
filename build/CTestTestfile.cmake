@@ -4,6 +4,8 @@
 # 
 # This file includes the relevant testing commands required for 
 # testing this directory and lists subdirectories to be tested as well.
-subdirs(gtest)
-subdirs(tf2_eigen)
-subdirs(mobile_manipulator)
+SUBDIRS(gtest)
+SUBDIRS(tf2_eigen)
+SUBDIRS(mobile_manipulator_urdf)
+SUBDIRS(agv)
+SUBDIRS(mobile_manipulator)

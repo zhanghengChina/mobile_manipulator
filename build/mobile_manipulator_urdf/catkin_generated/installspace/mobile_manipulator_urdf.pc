@@ -1,0 +1,8 @@
+prefix=/home/leon/mobile_manipulator/install
+
+Name: mobile_manipulator_urdf
+Description: Description of mobile_manipulator_urdf
+Version: 0.0.0
+Cflags: 
+Libs: -L/home/leon/mobile_manipulator/install/lib 
+Requires: 

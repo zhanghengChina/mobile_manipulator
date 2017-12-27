@@ -1,6 +1,7 @@
 #include <stdio.h>  
 #include "math.h"
 #include "sstream"
+#include "iomanip"
 #include <sys/types.h>  
 #include <sys/socket.h>  
 #include <netinet/in.h>  
@@ -46,7 +47,7 @@ public:
         }
         group.setMaxVelocityScalingFactor(0.3);
         group.setMaxAccelerationScalingFactor(0.2);
-        group.setNamedTarget("look");
+        group.setNamedTarget("null_space");
         group.move();
         ros::Duration(0.5).sleep();
 
@@ -132,6 +133,18 @@ public:
         tf2::convert(arm_base_to_agv_base_pose,arm_base_to_agv_base_affine);
     }
 void start();
+void display(Eigen::Affine3d &matrix)
+{
+    std::cout<<"The Transpose Is"<<std::endl;
+    for(int i = 0 ; i < 4; i ++)
+    {
+        for(int j = 0 ; j < 4 ; j ++)
+        {
+            std::cout<<std::setw(6)<<matrix(i,j);
+        }
+        std::cout<<std::endl;
+    }
+}
 
 void subcallback(const nav_msgs::Odometry::ConstPtr& msg)
 {
@@ -149,6 +162,8 @@ void subcallback(const nav_msgs::Odometry::ConstPtr& msg)
     base_now_affine = base_affine_init_inverse*base_now_affine;
     //这是实际的机械臂的基座相对出发点的坐标变换
     arm_base_affine = base_now_affine*arm_base_to_agv_base_affine;
+    display(arm_base_affine);
+
 
     if(odom_data_flag == 0)
     {
@@ -191,7 +206,7 @@ private:
 
     std::string combinemsg(std::vector<double> &velocity, double &acc)
     {
-        double time2move = 5;//给机器人的运动时间多一点，但是实际上并不会运动那么多就会被下一条指令覆盖
+        double time2move = 0.1;//给机器人的运动时间多一点，但是实际上并不会运动那么多就会被下一条指令覆盖
         std::string move_msg;
         move_msg = "speedl([";
         move_msg = move_msg + double2string(velocity[0]) + ",";

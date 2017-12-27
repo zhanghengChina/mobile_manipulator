@@ -13,6 +13,8 @@ math.h
 /home/leon/mobile_manipulator/src/mobile_manipulator/src/math.h
 sstream
 /home/leon/mobile_manipulator/src/mobile_manipulator/src/sstream
+iomanip
+/home/leon/mobile_manipulator/src/mobile_manipulator/src/iomanip
 sys/types.h
 -
 sys/socket.h

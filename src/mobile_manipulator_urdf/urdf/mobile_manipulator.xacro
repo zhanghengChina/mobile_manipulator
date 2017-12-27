@@ -1,0 +1,18 @@
+<?xml version="1.0" ?>
+<robot name="mobile_manipulator" xmlns:xacro="http://ros.org/wiki/xacro">
+    <xacro:include filename="$(find ur_description)/urdf/ur10.urdf.xacro" />
+    <xacro:include filename="$(find agv)/urdf/agv.xacro" />
+    <link name="world_frame"/>
+    <xacro:ur10_robot prefix="" joint_limited="true"/>
+
+    <joint name="world_to_robot" type="fixed">
+        <parent link="world_frame"/>
+        <child link="base_link"/>
+        <origin xyz="0 0 0" rpy="0 0 3.1415926535897932346"/>
+    </joint>
+    <joint name="world_to_agv" type="fixed">
+        <parent link="world_frame"/>
+        <child link="base_link_agv"/>
+        <origin xyz="0.4 0 0" rpy="0 0 -1.5708"/>
+    </joint>
+</robot>

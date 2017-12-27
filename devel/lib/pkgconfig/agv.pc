@@ -1,0 +1,8 @@
+prefix=/home/leon/mobile_manipulator/devel
+
+Name: agv
+Description: Description of agv
+Version: 1.0.0
+Cflags: 
+Libs: -L/home/leon/mobile_manipulator/devel/lib 
+Requires: 
